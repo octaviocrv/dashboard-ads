@@ -1,4 +1,4 @@
-// Utilitários para validação de datas e tratamento de erros
+import { formatarDataBR } from './data';
 
 export interface ValidacaoData {
   valida: boolean;
@@ -19,12 +19,10 @@ export class ValidadorDatas {
 
     const data = new Date(dataStr);
     
-    // Verifica se é uma data válida
     if (isNaN(data.getTime())) {
       return { valida: false, erro: 'Data inválida ou mal formatada' };
     }
 
-    // Verifica se não é uma data futura demais (mais de 1 dia no futuro)
     const hoje = new Date();
     const umDiaNoFuturo = new Date(hoje.getTime() + 24 * 60 * 60 * 1000);
     
@@ -32,7 +30,6 @@ export class ValidadorDatas {
       return { valida: false, erro: 'Data não pode ser no futuro' };
     }
 
-    // Verifica se não é muito antiga (mais de 2 anos)
     const doisAnosAtras = new Date();
     doisAnosAtras.setFullYear(doisAnosAtras.getFullYear() - 2);
     
@@ -44,7 +41,6 @@ export class ValidadorDatas {
   }
 
   static validarPeriodo(dataInicio: string, dataFim: string): ValidacaoData {
-    // Valida datas individualmente primeiro
     const validacaoInicio = this.validarData(dataInicio);
     if (!validacaoInicio.valida) {
       return { valida: false, erro: `Data inicial: ${validacaoInicio.erro}` };
@@ -55,7 +51,6 @@ export class ValidadorDatas {
       return { valida: false, erro: `Data final: ${validacaoFim.erro}` };
     }
 
-    // Verifica se data inicial é menor que final
     const inicio = new Date(dataInicio);
     const fim = new Date(dataFim);
     
@@ -66,7 +61,6 @@ export class ValidadorDatas {
       };
     }
 
-    // Verifica se o período não é muito longo (máximo 1 ano)
     const umAno = 365 * 24 * 60 * 60 * 1000; // 1 ano em millisegundos
     if (fim.getTime() - inicio.getTime() > umAno) {
       return { 
@@ -75,7 +69,6 @@ export class ValidadorDatas {
       };
     }
 
-    // Verifica se o período não é muito curto (mínimo 1 dia)
     const umDia = 24 * 60 * 60 * 1000;
     if (fim.getTime() - inicio.getTime() < umDia) {
       return { 
@@ -86,19 +79,10 @@ export class ValidadorDatas {
 
     return { valida: true };
   }
-
-  static formatarDataPtBr(dataStr: string): string {
-    try {
-      return new Date(dataStr).toLocaleDateString('pt-BR');
-    } catch {
-      return dataStr;
-    }
-  }
 }
 
 export class TratadorErros {
   static analisarErroAPI(error: any, data?: any): EstadoErro {
-    // Erro de rede
     if (error instanceof TypeError && error.message.includes('fetch')) {
       return {
         tipo: 'network',
@@ -107,7 +91,6 @@ export class TratadorErros {
       };
     }
 
-    // Erro de autenticação/autorização  
     if (error.message?.includes('401') || error.message?.includes('403')) {
       return {
         tipo: 'api',
@@ -116,7 +99,6 @@ export class TratadorErros {
       };
     }
 
-    // Erro de rate limit
     if (error.message?.includes('429')) {
       return {
         tipo: 'api',
@@ -125,7 +107,6 @@ export class TratadorErros {
       };
     }
 
-    // Dados vazios mas requisição OK
     if (data && Array.isArray(data) && data.length === 0) {
       return {
         tipo: 'empty',
@@ -134,7 +115,6 @@ export class TratadorErros {
       };
     }
 
-    // Erro genérico da API
     if (error.message?.includes('API') || error.message?.includes('Facebook')) {
       return {
         tipo: 'api',
@@ -143,7 +123,6 @@ export class TratadorErros {
       };
     }
 
-    // Erro genérico
     return {
       tipo: 'api',
       mensagem: 'Erro inesperado',
@@ -190,7 +169,6 @@ export function filtrarCampanhasPorNome(campanhas: any[], filtroNome: string): a
   const termo = filtroNome.toLowerCase().trim();
   
   return campanhas.filter(campanha => {
-    // Verifica se a campanha tem nome válido
     if (!campanha.nome || typeof campanha.nome !== 'string') {
       return false;
     }
